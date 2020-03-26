@@ -1,0 +1,42 @@
+<!-- Modal -->
+		  <div class="modal fade" id="payment_" role="dialog" >
+		    <div class="modal-dialog">
+		    
+		      <!-- Modal content-->
+		      <div class="modal-content">
+			        <div class="modal-header">
+			          <button type="button" class="close" data-dismiss="modal">&times;</button>
+			          <h4 class="modal-title">Cash/Cheque Payment:</h4>
+			        </div>
+			        <div class="modal-body">
+			        	<form class='cash'>
+			        		<label for="pay_type">pay method:</label>
+			        		<select id="pay_type">
+							  <option value="cash">Cash</option>
+							  <option value="cid='name' heque">Cheque</option>			  
+							</select>
+							<label for="name" id='name' hidden>.... from:</label>
+							  <input type="text" id="name" name="name" value='' hidden><br>
+			        		  <label for="addr">Address:</label><br>
+							  <input type="text" id="searchInput" name="addr" value=''><br>
+							  <label for="date">Date:</label><br>
+							  <input type="date" id="date" name="date"><br>
+							  <label for="amt">Amount:</label><br>
+							  <input type="number" step="0.01" id="amt" name="amt">
+							  <p id='custID' hidden></p>
+							  <button type="submit">submit</button>
+			        	</form>
+			        </div>
+			        
+			        </div> <!-- end of modal-body -->
+			        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+			        <div class="modal-footer">
+			        	
+			          
+
+			        </div>
+		      </div>
+		      
+		    </div>
+		  </div>
+

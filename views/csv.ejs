@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= title %></title>
+ <style>
+    .ui-autocomplete {
+z-index: 2147483647;
+}
+ </style>
+ 
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script src="/javascripts/js_functions.js"></script>
+    <link rel='stylesheet' href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+   
+
+    <style>
+  body  {padding-top:10px;
+          padding-left:30px;}
+ .payments tbody tr:hover {
+    background-color: yellow;
+}
+.csv tbody tr:hover {
+    background-color: yellow;
+}
+#payment_ .modal-body #pay tbody tr:hover {
+ background-color: lightblue; 
+}
+#no_custID_ .modal-body h5 table tbody tr:hover{
+ background-color: lightblue; 
+}
+  
+</style>
+  	 
+  </head>
+  <header>
+    <% include ../views/partials/header %>
+  </header>
+  <body>
+    
+
+  <h2>Bank CSV download</h2>
+  <input id='fileLoad' type='file' accept='.csv'>
+
+  
+  
+  <div class="table-responsive">
+    <div class='csv'>
+      <h3></h3>
+        <table class='table'>
+          <thead>
+            <th>Date</th>
+            <th>Amt</th>
+            <th>Transaction</th>
+            <th>Inv #</th>
+            <th>Name</th>
+          </thead>
+          <tbody>
+          </tbody>
+        </table>
+        <button  id='importPay' hidden>Import Payments</button>
+    </div>
+  
+    <div class='payments'>
+      <h3></h3>
+        <table class='table'>
+          <thead></thead>
+          <tbody></tbody>
+        </table> 
+        <button id='addPay' hidden>Add to payments</button> 
+    </div> 
+  </div>
+   <div class="container">
+         <% include ../views/modals/has_custID %>
+        <% include ../views/modals/has_no_custID %>  
+   </div> 
+  </body>
+
+
+
+  <script>
+ 
+///////////// LOAD CSV FILE ///////////////////////////////
+$('#fileLoad').change(function(e){
+         //console.log('in fileLoad');
+         var fileName=e.target.files[0].name;
+//         console.log(fileName);
+         $.get('csv/download',{fileName: fileName},function(data){
+//            console.log('in get data:::::');
+ //           console.log('length='+data.length)
+            console.log('data[0]='+data[0])
+            /// put data into object form
+            var csvData=[]
+            
+            arrToObj(data, csvData)// converts array of arrays to array of objects
+            //console.log('csvRow=='+csvRow.date+'  '+csvRow.amt+'  '+csvRow.trans)
+            console.log('csvData=='+csvData[0].date+'  '+csvData[2].trans)
+            //////////////////////////////////////
+            // replace ' with ` /// so it won't messup sql query
+            for(var i=0; i<csvData.length;i++){
+              if(csvData[i].trans.match(/'/)){/// if there is ' in the trans field
+               csvData[i].trans=csvData[i].trans.replace("'","`")//replaces ' with `'
+                //console.log('data[i][2]=>'+data[i][2])
+
+              }
+
+//                console.log('data[i]=='+data[i])
+            }
+            /////////////////////////////////
+            $('body').data({pdata:csvData}); // save pdata
+            $('.csv').show();
+            $('.csv h3').append(csvData.length);
+            for(var i=0; i<csvData.length;i++){
+              $('.csv .table tbody').append(
+                '<tr><td>'+csvData[i].date+'</td><td>'+csvData[i].amt+
+                '</td><td>'+csvData[i].trans+'</td><td>'+
+                csvData[i].custID+'</td></tr>')
+            }//for
+         })// get csv/download
+         $('.csv button#importPay').show()// shows import button
+});// fileload
+
+///////////////////////////////////////////////
+$('.csv .table tbody tr').on('click', function(){
+console.log('row clicked'+JSON.stringify($(this).index()))
+});
+/////////////////////////////////////
+//////////////////  IMPORT PAYMENTS //////
+/////////////////////////////////////////////
+$('.csv button#importPay').on('click', function(){
+//console.log('importPay clicked')
+var pdata=$('body').data().pdata;// retreive pdat
+                console.log('payd='+JSON.stringify(pdata[0]))
+  $.post('csv/append',{paydata: JSON.stringify(pdata)},function(data){
+  //  console.log('in csv/append');
+    //console.log('data=='+data);
+   $('.payments .table thead').append('<th> recID</th>'+
+                                      '<th> Date</th>'+
+                                      '<th> Amt</th>'+
+                                      '<th> Transaction</th>'+
+                                      '<th> CustID</th>'+
+                                      '<th> String</th>')
+///////////////////////////////////////
+          if(data.length==0){console.log('no records to add');
+                              alert('no records to add')
+                               return  }
+          else {$('body').data({rec1:data[0][0]});} // save first recno
+/////////////////////////////////
+////// translate post data to array of JSON objects /////
+          var payData=[]
+          for(var i=0; i<data.length;i++){
+            var payRow={}
+            payRow.id=data[i][0]
+            payRow.date=data[i][1]
+            payRow.amt=data[i][2]
+            payRow.trans=data[i][3]
+            payRow.custID=data[i][4]
+            //payRow.string=data[i][5]
+            payData.push(payRow)
+          }
+          console.log('payData=='+JSON.stringify(payData))
+
+    for(var i=0; i<payData.length;i++){
+      
+                $('.payments .table tbody').append(
+                  '<tr><td>'+payData[i].id+'</td><td>'
+                  +payData[i].date+'</td><td>'
+                  +payData[i].amt+'</td><td>'
+                  +payData[i].trans+'</td><td>'
+                  +payData[i].custID+'</td><td>'
+                  +payData[i].trans.match(/,\s.*,/)+'</td></tr>')
+      //          console.log('lastIndexOf=='+data[i][3].slice(data[i][3].lastIndexOf(',')))
+                
+    }//for
+    $('.csv button#importPay').hide()// hides import button
+    $('.csv').hide();// hides csv
+    $('.payments button#addPay').show()
+    /////////////////////////////
+    selectRow(payData)
+  })// post
+});//'.csv button#importPay').on('click',
+
+////////////END IMPORT PAYMENTS ////////////////////////////////////////
+
+$('.payments button#addPay').on('click', function(){
+  console.log('in addPay')
+  $.post('/csv/tempToPay', function(data){
+
+  })
+
+})
+
+</script>
+</html>

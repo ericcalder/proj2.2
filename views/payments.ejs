@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+      <title><%= title %></title>
+      <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+      <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+      <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+      <script src="/javascripts/js_functions.js"></script>
+      <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+      
+    <link rel='stylesheet' href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+    <!--<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+      -->
+<style>
+  body  {padding-top:10px;
+          padding-left:30px;}
+ .payments tbody tr:hover {
+    background-color: yellow;
+}
+.csv tbody tr:hover {
+    background-color: yellow;
+}
+#payment_ .modal-body #pay tbody tr:hover {
+ background-color: lightblue; 
+}
+#no_custID_ .modal-body h5 table tbody tr:hover{
+ background-color: lightblue; 
+}
+}
+
+
+
+
+
+</style>
+</head>
+<header>
+  <% include ../views/partials/header %>
+</header>
+
+<body>
+    
+
+  <h2>Payments Table</h2>
+
+  
+ 
+  <table id='payments' class='table'>
+    <tbody>
+      <% for(var i=0; i< pdata.length; i++) { %>
+      <tr>
+        <td><%= pdata[i].id %></td>
+        <td><%= pdata[i].custID %></td>
+        <td><%= pdata[i].new_date %></td>
+        <td><%= pdata[i].amt %></td>
+        <td><%= pdata[i].trans %></td>
+        
+        </tr>
+      <% } %>
+    </tbody>
+  </table>
+  <button id='displayPay'>Show payments</button>
+  
+  
+
+  
+   <div class="container">
+         <% include ../views/modals/has_custID %>
+        <% include ../views/modals/has_no_custID %>  
+   </div> 
+
+  
+</body>
+</html>
+<script>
+  $(document).ready(function(){
+
+  //$('#displayPay').hide();
+  /////// 
+  //////////////////////////////////////
+ // console.log('href=='+location.href)
+  if(location.href.match(/=.*/)){
+    //console.log('href param=='+location.href.match(/=.*/)[0])
+    $('#payment_').modal('show');
+    hasCustID()
+  /// if cheque selected show name field ////
+   $('form.cash select').on('change',function(){
+    var optionsText = this.options[this.selectedIndex].text;
+       if(optionsText=='Cheque'){
+          $('form.cash #name').show()
+       }// if
+   });//on change
+   ////////////////////////////////
+$( "#payment_ form.cash" ).submit(function( event ) {
+  
+      event.preventDefault();
+      
+      var formData = $("#payment_ form.cash").serializeArray();
+      formData.push({ 
+      name: 'payType',
+      value: $('select option:selected').text() 
+      })
+      formData.push({
+        name: 'custID',
+        value:$( "#payment_ form.cash p#custID" ).text()
+      })
+      console.log(formData);
+//////////post fromData ////////////////////
+      $.post('csv/insert/payment',{formData:JSON.stringify(formData)}, function(data){
+          console.log('in csv/insert/payment')
+          $('#payment_').modal('hide');
+      })//post
+//////////////////////////
+});//submit
+  }//if make cash/cheque payment
+  /////////////////////////////////////////
+  //////////////////////////////////////////
+  /*
+$('#no_custID_ div.modal-footer button.btn#delete').on('click', function(){
+  console.log('in modal-footer delete')
+  var pymt=$('#no_custID_ div.modal-header h4.modal-title').text()
+  console.log('pymt====='+pymt+' ?')
+  var result=confirm('DELETE '+pymt)
+  console.log('result=='+result)
+})
+*/
+  ///////////////////////////////////////////
+$("#payments tbody tr").mouseover(function(){
+  console.log('on mouseover')
+  var custID=$(this).find("td").eq(1).text();
+  console.log('custID=='+custID)
+  if(custID!='0'){
+      $.get('payments/details',{custID: custID},function(data){
+        console.log('details'+data[0].name);
+        
+        $("#payments tbody tr").attr({
+          title: data[0].name+'  '+data[0].prop
+                                      })
+      });// get
+  }//iff
+  else
+    {$("#payments tbody tr").attr({title: 'NO custID'});
+  }// ELSE
+   
+}/// function
+);//mouseover
+
+
+$('#payments tbody tr').on('click',function(){
+    console.log('button click');
+   
+    console.log('payments clicked')
+        var tableRow=$(this).index()
+        console.log('tableRow=='+tableRow)
+        
+        var tr={}
+        tr.id=$(this).find('td:eq(0)').text()
+        tr.custID=$(this).find('td:eq(1)').text()
+        tr.date=$(this).find('td:eq(2)').text()
+        tr.amt=$(this).find('td:eq(3)').text()
+        tr.trans=$(this).find('td:eq(4)').text()
+        console.log('tr=='+JSON.stringify(tr))
+        console.log('first rec==='+$('#payments tbody tr:eq(0) td:eq(0)').text())
+        var rec1=parseInt($('#payments tbody tr:eq(0) td:eq(0)').text())
+        console.log('rec1==='+rec1)
+        noFindCustID(tr,tableRow,'payments')
+  //  var pay=$('body').pay//retrieve
+   // selectRow(pay)
+
+  });// select row
+
+
+}); //document ready
+
+</script>
