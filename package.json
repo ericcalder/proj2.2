@@ -12,7 +12,7 @@
     "csv-reader": "^1.0.3",
     "ejs": "^2.5.8",
     "express": "^4.16.2",
-    "html-pdf": "^2.2.0",
+    "html-pdf": "^3.0.1",
     "mysql": "^2.17.1",
     "node-geocoder": "^3.22.0"
   }
